@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Invoice</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm;
+        }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            font-size: 11px;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+        /* ── Header ── */
+        .invoice-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .company-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .company-name {
+            font-size: 22px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .company-tagline {
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .company-address {
+            font-size: 10px;
+            color: #444;
+        }
+        .company-gstin {
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        /* ── Details Grid ── */
+        .details-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border: 1px solid #000;
+        }
+        .details-grid td {
+            vertical-align: top;
+            padding: 8px 10px;
+            font-size: 10px;
+        }
+        .details-grid .left-col {
+            width: 60%;
+            border-right: 1px solid #000;
+        }
+        .details-grid .right-col {
+            width: 40%;
+        }
+        .details-grid .label {
+            font-weight: bold;
+            color: #333;
+        }
+        .buyer-name {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        /* ── Items Table ── */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+        .items-table th {
+            background-color: #e8e8e8;
+            border: 1px solid #000;
+            padding: 6px 5px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .items-table td {
+            border: 1px solid #000;
+            padding: 4px 5px;
+            font-size: 10px;
+        }
+        .items-table .col-sno { width: 30px; text-align: center; }
+        .items-table .col-desc { text-align: left; }
+        .items-table .col-hsn { width: 70px; text-align: center; }
+        .items-table .col-qty { width: 50px; text-align: center; }
+        .items-table .col-rate { width: 80px; text-align: right; }
+        .items-table .col-amount { width: 90px; text-align: right; }
+
+        /* ── Totals ── */
+        .totals-section {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-section td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 10px;
+        }
+        .totals-section .total-label {
+            text-align: right;
+            font-weight: bold;
+            width: 75%;
+        }
+        .totals-section .total-value {
+            text-align: right;
+            width: 25%;
+            font-family: monospace;
+        }
+        .grand-total-row td {
+            font-weight: bold;
+            font-size: 12px;
+            background-color: #f0f0f0;
+        }
+
+        /* ── Amount in Words ── */
+        .amount-words {
+            border: 1px solid #000;
+            border-top: none;
+            padding: 6px 10px;
+            font-size: 10px;
+            font-style: italic;
+        }
+
+        /* ── Footer ── */
+        .footer-section {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+        }
+        .footer-section td {
+            border: 1px solid #000;
+            padding: 8px 10px;
+            font-size: 9px;
+            vertical-align: top;
+        }
+        .bank-details {
+            width: 55%;
+        }
+        .auth-signatory {
+            width: 45%;
+            text-align: right;
+        }
+        .auth-signatory .company-for {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 30px;
+        }
+        .auth-signatory .sig-line {
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .jurisdiction {
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title -->
+    <div class="invoice-title">INVOICE (ORIGINAL FOR RECIPIENT)</div>
+
+    <!-- Company Header -->
+    <div class="company-header">
+        <div class="company-name" th:text="${company.name}">COMPANY NAME</div>
+        <div class="company-tagline">SALES SERVICE &amp; SPARES FOR AIR &amp; GAS COMPRESSOR</div>
+        <div class="company-address" th:text="${company.address}">Address</div>
+        <div class="company-gstin">
+            GSTIN: <span th:text="${company.gstin}">GSTIN</span>
+            <span th:if="${company.pan}"> &nbsp;|&nbsp; PAN: <span th:text="${company.pan}">PAN</span></span>
+            <span th:if="${company.phone}"> &nbsp;|&nbsp; Ph: <span th:text="${company.phone}">Phone</span></span>
+        </div>
+    </div>
+
+    <!-- Two-Column Details -->
+    <table class="details-grid">
+        <tr>
+            <td class="left-col">
+                <div class="label">BUYER:</div>
+                <div class="buyer-name" th:text="${invoice.client.name}">Client Name</div>
+                <div th:text="${invoice.client.billingAddress}">Billing Address</div>
+                <div th:if="${invoice.client.gstin}">GSTIN: <span th:text="${invoice.client.gstin}">GSTIN</span></div>
+                <div>State / Place of Supply: <span th:text="${invoice.client.state}">State</span></div>
+            </td>
+            <td class="right-col">
+                <div><span class="label">Invoice No:</span> <span th:text="${invoice.invoiceNumber}">INV-001</span></div>
+                <div><span class="label">Date:</span> <span th:text="${#temporals.format(invoice.issuedAt, 'dd MMMM yyyy')}">Date</span></div>
+                <div th:if="${invoice.irn}"><span class="label">IRN:</span> <span th:text="${invoice.irn}">IRN</span></div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Shipped To (if different from billing) -->
+    <table class="details-grid" th:if="${invoice.client.shippingAddress != null and invoice.client.shippingAddress != ''}">
+        <tr>
+            <td colspan="2" style="font-size: 10px;">
+                <span class="label">SHIPPED TO:</span>
+                <span th:text="${invoice.client.shippingAddress}">Shipping Address</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Line Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-sno">S.No</th>
+                <th class="col-desc">Item Description</th>
+                <th class="col-hsn">HSN Code</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-rate">Rate (₹)</th>
+                <th class="col-amount">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item, stat : ${invoice.lineItems}">
+                <td class="col-sno" th:text="${stat.count}">1</td>
+                <td class="col-desc" th:text="${item.product.name}">Item Name</td>
+                <td class="col-hsn" th:text="${item.product.hsnCode}">HSN</td>
+                <td class="col-qty" th:text="${#numbers.formatDecimal(item.quantity, 0, 'COMMA', 2, 'POINT')}">1.00</td>
+                <td class="col-rate" th:text="${#numbers.formatDecimal(item.rate, 1, 'COMMA', 2, 'POINT')}">100.00</td>
+                <td class="col-amount" th:text="${#numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">100.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <table class="totals-section">
+        <!-- Subtotal -->
+        <tr>
+            <td class="total-label">Taxable Value</td>
+            <td class="total-value" th:text="${#numbers.formatDecimal(invoice.totalAmount - invoice.cgstAmount - invoice.sgstAmount - invoice.igstAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        </tr>
+        <!-- CGST (only if > 0) -->
+        <tr th:if="${invoice.cgstAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+            <td class="total-label">CGST @ 9%</td>
+            <td class="total-value" th:text="${#numbers.formatDecimal(invoice.cgstAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        </tr>
+        <!-- SGST (only if > 0) -->
+        <tr th:if="${invoice.sgstAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+            <td class="total-label">SGST @ 9%</td>
+            <td class="total-value" th:text="${#numbers.formatDecimal(invoice.sgstAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        </tr>
+        <!-- IGST (only if > 0) -->
+        <tr th:if="${invoice.igstAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+            <td class="total-label">IGST @ 18%</td>
+            <td class="total-value" th:text="${#numbers.formatDecimal(invoice.igstAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        </tr>
+        <!-- Grand Total -->
+        <tr class="grand-total-row">
+            <td class="total-label">TOTAL AMOUNT</td>
+            <td class="total-value" th:text="${#numbers.formatDecimal(invoice.totalAmount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        </tr>
+    </table>
+
+    <!-- Footer: Bank Details + Signatory -->
+    <table class="footer-section">
+        <tr>
+            <td class="bank-details">
+                <div th:if="${company.bankName != null}">
+                    <strong>OUR BANK DETAILS:</strong><br/>
+                    <span th:text="${company.bankName}">Bank</span><br/>
+                    A/C No: <span th:text="${company.bankAccount}">Account</span><br/>
+                    IFSC: <span th:text="${company.bankIfsc}">IFSC</span><br/>
+                    <span th:if="${company.bankBranch}" th:text="${company.bankBranch}">Branch</span>
+                </div>
+            </td>
+            <td class="auth-signatory">
+                <div class="company-for">FOR <span th:text="${company.name}">COMPANY</span></div>
+                <div class="sig-line">Authorised Signatory</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="jurisdiction">
+        SUBJECT TO <span th:text="${company.state != null ? company.state.toUpperCase() : 'LOCAL'}">STATE</span> JURISDICTION &nbsp;|&nbsp; This is a Computer Generated Invoice
+    </div>
+</body>
+</html>

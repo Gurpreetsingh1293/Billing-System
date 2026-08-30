@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Invoice</title>
+    <style>
+        body { font-family: 'Helvetica', Arial, sans-serif; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .company-name { font-size: 24px; font-weight: bold; }
+        .details-table { width: 100%; margin-bottom: 20px; }
+        .details-table td { width: 50%; vertical-align: top; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th, .items-table td { border: 1px solid #000; padding: 5px; text-align: left; }
+        .items-table th { background-color: #f2f2f2; }
+        .totals-table { width: 40%; float: right; border-collapse: collapse; }
+        .totals-table td { border: 1px solid #000; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name" th:text="${company.name}">Company Name</div>
+        <div th:text="${company.address}">Address</div>
+        <div>GSTIN: <span th:text="${company.gstin}">GSTIN</span></div>
+    </div>
+
+    <table class="details-table">
+        <tr>
+            <td>
+                <strong>Billed To:</strong><br/>
+                <span th:text="${invoice.client.name}">Client Name</span><br/>
+                <span th:text="${invoice.client.billingAddress}">Billing Address</span><br/>
+                GSTIN: <span th:text="${invoice.client.gstin}">GSTIN</span><br/>
+                State: <span th:text="${invoice.client.state}">State</span>
+            </td>
+            <td>
+                <strong>Invoice No:</strong> <span th:text="${invoice.invoiceNumber}">INV-001</span><br/>
+                <strong>Date:</strong> <span th:text="${#temporals.format(invoice.issuedAt, 'dd-MM-yyyy')}">Date</span><br/>
+                <strong>IRN:</strong> <span th:text="${invoice.irn}">IRN</span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Item Description</th>
+                <th>HSN</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item, stat : ${invoice.lineItems}">
+                <td th:text="${stat.count}">1</td>
+                <td th:text="${item.product.name}">Item Name</td>
+                <td th:text="${item.product.hsnCode}">HSN</td>
+                <td th:text="${item.quantity}">1</td>
+                <td th:text="${item.rate}">100.00</td>
+                <td th:text="${item.lineTotal}">100.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td><strong>CGST</strong></td>
+            <td th:text="${invoice.cgstAmount}">0.00</td>
+        </tr>
+        <tr>
+            <td><strong>SGST</strong></td>
+            <td th:text="${invoice.sgstAmount}">0.00</td>
+        </tr>
+        <tr>
+            <td><strong>IGST</strong></td>
+            <td th:text="${invoice.igstAmount}">0.00</td>
+        </tr>
+        <tr>
+            <td><strong>Total Amount</strong></td>
+            <td th:text="${invoice.totalAmount}">0.00</td>
+        </tr>
+    </table>
+</body>
+</html>
