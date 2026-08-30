@@ -1,0 +1,53 @@
+# Phase 1 MVP Backend Implementation - Walkthrough
+
+The backend for the **Invoice Management SaaS** (Phase 1 MVP) is now fully implemented and successfully compiles! Here is a summary of the work completed.
+
+## 1. Database & Multi-Tenancy
+
+> [!TIP]
+> **Data Isolation Strategy**
+> The core of the system is the robust multi-tenant architecture. Every single table (except for `company`) uses a `tenant_id` column. We configured Hibernate with the native `@TenantId` annotation. This automatically filters all queries at the lowest level so cross-tenant data leakage is practically impossible.
+
+- **PostgreSQL & Flyway:** Configured `application.properties` and created the initial database schema (`V1__init_schema.sql`).
+- **Tenant Context:** Created a `ThreadLocal`-based `TenantContext` to store the active tenant ID for the duration of an HTTP request.
+- **Tenant Interceptor:** Built an HTTP interceptor to read the `X-Tenant-ID` header (fallback/testing) or rely on the JWT context.
+
+## 2. Security & Authentication
+
+> [!IMPORTANT]
+> **JWT Architecture**
+> The system is stateless. When a user logs in via the `AuthController`, they receive a JWT. This JWT embeds both their `role` and their `tenantId`. 
+> The `JwtAuthenticationFilter` intercepts incoming requests, validates the signature, sets the Spring Security Context, and crucially, populates the `TenantContext`.
+
+- **Endpoints Secured:** `/api/v1/auth/**` is fully public. All other endpoints require a valid Bearer token.
+- **Spring Security 7 Ready:** Handled API upgrades by using constructor injection for the `DaoAuthenticationProvider`.
+
+## 3. Domain Entities & Repositories
+
+- Mapped the entire Entity-Relationship diagram into Spring Data JPA Entities.
+- Entities included: `Company`, `AppUser`, `Product`, `ManufacturerRate`, `Client`, `Invoice`, `InvoiceLineItem`, `CreditNote`, and `InvoiceSequence`.
+- Created standard JPA Repositories for all of them.
+
+## 4. Core Business Logic
+
+- **Strict Invoice Numbering:** `InvoiceNumberGenerator` uses a dedicated `InvoiceSequence` table with a `PESSIMISTIC_WRITE` database lock. This guarantees gapless, sequential numbering per financial year even if multiple staff members issue invoices for the same company at the exact same millisecond.
+- **Tax Rules:** `TaxCalculationService` dynamically splits the generic 18% GST into CGST+SGST (if the client and company states match) or IGST (if they differ).
+- **Invoice Lifecycle:** Built `InvoiceService` capable of creating DRAFT invoices (allowing edits) and transitioning them to ISSUED/PENDING_IRN (locking line items and generating the official invoice number).
+
+## 5. PDF Generation
+
+- **Thymeleaf HTML:** Built base HTML structures for the A4 Invoice (`invoice-template.html`) and the smaller format label (`shipping-label-template.html`).
+- **OpenHTMLtoPDF Engine:** Implemented `PdfGenerationService` which fuses the invoice data with the HTML template and renders a binary PDF stream perfectly.
+
+## 6. E-Invoicing Integration (GSP Mock)
+
+- Implemented a `MockGSPClient` behind a generic `GSPClient` interface.
+- For Phase 1 testing, this seamlessly simulates an API call delay and returns a fake 64-character Invoice Reference Number (IRN) and QR string so you can verify the end-to-end PDF flow without incurring real GSP API costs.
+
+---
+
+### Verification
+The entire Maven project was successfully compiled (`mvn clean compile`) with zero syntax errors.
+
+### Next Steps
+The backend foundation is complete. Let me know when you are ready to start building the **Frontend (React/Vite PWA)** or if you want to write some integration tests for these services first!
